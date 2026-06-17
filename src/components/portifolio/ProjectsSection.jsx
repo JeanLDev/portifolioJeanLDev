@@ -1,196 +1,570 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ExternalLink, Github, ArrowRight, Code2, Workflow } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import useniveloTumblr from "../../imagens/useniveloTumblr.png"
+import React, { useState, useMemo } from 'react';
+import { 
+  FolderGit2, 
+  ExternalLink, 
+  Github, 
+  Plus, 
+  Search, 
+  Star, 
+  Code2, 
+  Sparkles, 
+  Layers, 
+  Flame, 
+  Cpu, 
+  TrendingUp, 
+  Grid, 
+  Filter, 
+  Trash2, 
+  X,
+  CheckCircle2,
+  Bookmark
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const projects = [
-    {
-    id: 1,
-    title: 'Usenivelo',
-    description: 'Plataforma de organização visual com hierarquias avançadas, múltiplos níveis de boards e colaboração em tempo real. Permite criar fluxos complexos, gerenciar times e estruturar projetos de forma totalmente personalizada.',
-    image: useniveloTumblr,
-    tags: ['React', 'Vite.js', 'Tailwind', 'Supabase'],
-    category: 'web',
-    link: 'https://usenivelo.com',
-    github: 'https://github.com/JeanLDev/Usenivelo-repository'
-  },
+// ==========================================
+// TOKENS DE CORES DE MARCA (BRAND COLORS)
+// ==========================================
+const BRAND_THEMES = {
+  blue: { id: 'blue', hex: '#2563EB', name: 'Azul Elétrico', bg: 'bg-[#2563EB]', border: 'border-[#2563EB]' },
+  orange: { id: 'orange', hex: '#F97316', name: 'Laranja Flame', bg: 'bg-[#F97316]', border: 'border-[#F97316]' },
+  yellow: { id: 'yellow', hex: '#FACC15', name: 'Amarelo Figma', bg: 'bg-[#FACC15]', border: 'border-[#FACC15]' },
+  pink: { id: 'pink', hex: '#EC4899', name: 'Rosa Cyberpunk', bg: 'bg-[#EC4899]', border: 'border-[#EC4899]' },
+  green: { id: 'green', hex: '#22C55E', name: 'Verde Radiação', bg: 'bg-[#22C55E]', border: 'border-[#22C55E]' },
+};
 
-  {
-    id: 2,
-    title: 'Automação de CRM',
-    description: 'Sistema de automação completo integrando WhatsApp, email marketing e CRM. Leads qualificados automaticamente com IA.',
-    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=500&fit=crop',
-    tags: ['N8N', 'WhatsApp API', 'OpenAI', 'Webhook'],
-    category: 'automation',
-    link: '#',
-  },
-  {
-    id: 3,
-    title: 'Plataforma SaaS',
-    description: 'Plataforma multi-tenant para gestão empresarial com módulos de finanças, RH e projetos. Arquitetura escalável.',
-    image: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&h=500&fit=crop',
-    tags: ['Next.js', 'TypeScript', 'Prisma', 'AWS'],
-    category: 'web',
-    link: '#',
-    github: '#',
-  },
-  {
-    id: 4,
-    title: 'Bot de Atendimento',
-    description: 'Chatbot inteligente com IA para atendimento 24/7. Integração com agenda, pagamentos e suporte automatizado.',
-    image: 'https://images.unsplash.com/photo-1531746790731-6c087fecd65a?w=800&h=500&fit=crop',
-    tags: ['N8N', 'GPT-4', 'Telegram', 'Discord'],
-    category: 'automation',
-    link: '#',
-  },
-  {
-    id: 5,
-    title: 'App de Delivery',
-    description: 'Aplicação web completa para restaurantes com pedidos em tempo real, rastreamento e gestão de entregas.',
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&h=500&fit=crop',
-    tags: ['React', 'Firebase', 'Google Maps', 'PWA'],
-    category: 'web',
-    link: '#',
-    github: '#',
-  },
-  {
-    id: 6,
-    title: 'Sincronização de Estoque',
-    description: 'Automação para sincronizar estoque entre múltiplas plataformas: Shopify, WooCommerce, Mercado Livre e mais.',
-    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&h=500&fit=crop',
-    tags: ['N8N', 'REST APIs', 'Shopify', 'ML API'],
-    category: 'automation',
-    link: '#',
-  },
-];
+// ==========================================
+// DADOS INICIAIS DE PROJETOS (MOCK DATA)
+// ==========================================
 
-const filters = [
-  { id: 'all', label: 'Todos', icon: null },
-  { id: 'web', label: 'Web', icon: Code2 },
-  { id: 'automation', label: 'Automações', icon: Workflow },
-];
 
-export default function ProjectsSection() {
-  const [activeFilter, setActiveFilter] = useState('all');
+export default function App({projetos, setSelectedProject}) {
+  // Estado global para guardar a cor de destaque ativa
+  const [activeTheme, setActiveTheme] = useState(BRAND_THEMES.blue);
+  
+  // Estado dos projetos e filtros
+  const [projects, setProjects] = useState(projetos);
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Todos");
+  
+  // Estados para abrir o formulário de novo projeto
+  const [showModal, setShowModal] = useState(false);
+  
+  // Estado do formulário de novo projeto
+  const [newProject, setNewProject] = useState({
+    title: "",
+    description: "",
+    category: "Front-end",
+    tech: "",
+    progress: 50,
+    github: "",
+    live: "",
+    status: "Em Desenvolvimento"
+  });
 
-  const filteredProjects = activeFilter === 'all' 
-    ? projects 
-    : projects.filter(p => p.category === activeFilter);
+  // Categorias únicas dos projetos para o filtro
+  const categories = useMemo(() => {
+    const list = new Set(projects.map(p => p.category));
+    return ["Todos", ...Array.from(list)];
+  }, [projects]);
+
+  // Lista filtrada de projetos de acordo com pesquisa e categoria
+  const filteredProjects = useMemo(() => {
+    return projects.filter(project => {
+      const matchesSearch = project.title.toLowerCase().includes(search.toLowerCase()) ||
+                            project.tech.some(t => t.toLowerCase().includes(search.toLowerCase())) ||
+                            project.description.toLowerCase().includes(search.toLowerCase());
+      const matchesCategory = selectedCategory === "Todos" || project.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [projects, search, selectedCategory]);
+
+  // Estatísticas dinâmicas dos projetos carregados
+  const stats = useMemo(() => {
+    return {
+      total: projects.length,
+      stars: projects.reduce((acc, curr) => acc + curr.stars, 0),
+      completed: projects.filter(p => p.progress === 100).length,
+      avgProgress: Math.round(projects.reduce((acc, curr) => acc + curr.progress, 0) / (projects.length || 1))
+    };
+  }, [projects]);
+
+  // Função para dar "Star/Favorito"
+  const toggleStar = (projectId) => {
+    setProjects(prev => prev.map(p => {
+      if (p.id === projectId) {
+        return { ...p, stars: p.stars + 1 };
+      }
+      return p;
+    }));
+  };
+
+  // Remover um projeto
+  const deleteProject = (projectId) => {
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+  };
+
+  // Submeter o novo projeto
+  const handleSubmitProject = (e) => {
+    e.preventDefault();
+    if (!newProject.title.trim() || !newProject.description.trim()) return;
+
+    const techArray = newProject.tech
+      .split(',')
+      .map(item => item.trim())
+      .filter(item => item.length > 0);
+
+    const projectToAdd = {
+      id: Date.now(),
+      title: newProject.title,
+      description: newProject.description,
+      category: newProject.category,
+      tech: techArray.length > 0 ? techArray : ["React"],
+      stars: 0,
+      status: newProject.status,
+      progress: Number(newProject.progress),
+      github: newProject.github || "github.com",
+      live: newProject.live,
+      featured: false
+    };
+
+    setProjects([projectToAdd, ...projects]);
+    setShowModal(false);
+    
+    // Limpar formulário
+    setNewProject({
+      title: "",
+      description: "",
+      category: "Front-end",
+      tech: "",
+      progress: 50,
+      github: "",
+      live: "",
+      status: "Em Desenvolvimento"
+    });
+  };
 
   return (
-    <section id="projetos" className="py-2 bg-white">
-      <div className="max-w-6xl mx-auto px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <h2 className="text-4xl md:text-5xl font-bold text-zinc-900 mt-3">
-            Projetos em Destaque
-          </h2>
-          <p className="text-zinc-600 mt-4 max-w-2xl mx-auto">
-            Uma seleção dos meus melhores trabalhos em desenvolvimento web e automações
-          </p>
-        </motion.div>
+    <div className="min-h-screen bg-[#EFF3F6] text-[#0F172A] font-sans p-4 sm:p-6 md:p-8 selection:bg-black selection:text-white">
+      
+      {/* ==========================================
+          HEADER / CABEÇALHO DO DASHBOARD
+          ========================================== */}
+      <header className="hidden max-w-7xl mx-auto mb-8 bg-white border-2 border-[#0F172A] rounded-2xl p-6 shadow-[6px_6px_0px_#0F172A] transition-all duration-300">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`h-4 w-4 rounded-full ${activeTheme.bg} border-2 border-[#0F172A]`} />
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                PROJETOS DE ENGENHARIA / PORTFÓLIO
+              </span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#0F172A] flex items-center gap-2">
+              ROOT<span className="text-stroke-3">_</span>LABS <FolderGit2 className="h-8 w-8 text-black" />
+            </h1>
+            <p className="text-sm font-semibold text-slate-500 mt-1">
+              Repositório de projetos open-source e protótipos experimentais.
+            </p>
+          </div>
 
-        {/* Filter Buttons */}
-        <div className="flex justify-center gap-3 mb-12">
-          {filters.map((filter) => (
-            <Button
-              key={filter.id}
-              variant={activeFilter === filter.id ? "default" : "outline"}
-              onClick={() => setActiveFilter(filter.id)}
-              className={`rounded-full px-6 transition-all duration-300 ${
-                activeFilter === filter.id 
-                  ? 'bg-zinc-900 text-white' 
-                  : 'border-zinc-200 hover:border-zinc-400'
-              }`}
+          {/* Seletor de Cores de Destaque Dinâmicas (Brutalist Playground) */}
+          <div className="bg-[#EFF3F6] border-2 border-[#0F172A] rounded-xl p-3 shadow-[4px_4px_0px_#0F172A]">
+            <p className="text-[9px] font-black uppercase tracking-wider text-slate-500 mb-2">
+              Escolher Accent Color (Neo-Brutalismo):
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {Object.values(BRAND_THEMES).map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => setActiveTheme(theme)}
+                  className={`px-3 py-1 text-xs font-extrabold rounded-md border-2 border-[#0F172A] transition-all duration-150 flex items-center gap-1.5
+                    ${activeTheme.id === theme.id 
+                      ? `${theme.bg} text-white shadow-[2px_2px_0px_#0F172A] -translate-x-0.5 -translate-y-0.5` 
+                      : 'bg-white text-slate-700 hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_#0F172A] active:translate-y-0'}`}
+                >
+                  <span className={`w-2.5 h-2.5 rounded-full border border-black ${theme.bg}`} />
+                  {theme.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ==========================================
+          PAINEL DE ESTATÍSTICAS (Métricas de Eng.)
+          ========================================== */}
+      <section className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+        
+        {/* Card Estatística 1 */}
+        <div className="bg-white border-2 border-[#0F172A] rounded-2xl p-4 shadow-[4px_4px_0px_#0F172A] flex items-center gap-4 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0F172A] transition-all duration-200">
+          <div className="p-3 bg-[#EFF3F6] border-2 border-[#0F172A] rounded-xl">
+            <Code2 className="h-6 w-6 text-[#0F172A]" />
+          </div>
+          <div>
+            <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 block">Total Projetos</span>
+            <span className="text-2xl font-black">{stats.total}</span>
+          </div>
+        </div>
+
+
+        {/* Card Estatística 3 */}
+        <div className="bg-white border-2 border-[#0F172A] rounded-2xl p-4 shadow-[4px_4px_0px_#0F172A] flex items-center gap-4 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0F172A] transition-all duration-200">
+          <div className="p-3 bg-[#EFF3F6] border-2 border-[#0F172A] rounded-xl">
+            <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+          </div>
+          <div>
+            <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 block">Concluídos</span>
+            <span className="text-2xl font-black">{stats.completed}</span>
+          </div>
+        </div>
+
+        {/* Card Estatística 4 */}
+        <div className="bg-white border-2 border-[#0F172A] rounded-2xl p-4 shadow-[4px_4px_0px_#0F172A] flex items-center gap-4 hover:-translate-y-1 hover:shadow-[6px_6px_0px_#0F172A] transition-all duration-200">
+          <div className="p-3 bg-[#EFF3F6] border-2 border-[#0F172A] rounded-xl">
+            <TrendingUp className="h-6 w-6 text-indigo-500" />
+          </div>
+          <div>
+            <span className="text-[9px] font-black uppercase tracking-wider text-slate-500 block">Progresso Médio</span>
+            <span className="text-2xl font-black">{stats.avgProgress}%</span>
+          </div>
+        </div>
+
+      </section>
+
+      {/* ==========================================
+          BARRA DE AÇÕES (Pesquisa, Filtros e Add)
+          ========================================== */}
+      <section className="max-w-7xl mx-auto mb-8 bg-white border-2 border-[#0F172A] rounded-2xl p-4 shadow-[4px_4px_0px_#0F172A] flex flex-col lg:flex-row items-center justify-between gap-4">
+        
+        {/* Barra de Pesquisa */}
+        <div className="relative w-full lg:w-1/3">
+          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-slate-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Pesquisar por nome, tecnologia..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-[#EFF3F6] border-2 border-[#0F172A] rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#0F172A] placeholder-slate-400"
+          />
+        </div>
+
+        {/* Filtros de Categoria */}
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 mr-2 flex items-center gap-1">
+            <Filter className="h-3 w-3" /> Categoria:
+          </span>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3 py-1.5 text-xs font-extrabold rounded-lg border-2 border-[#0F172A] transition-all duration-150
+                ${selectedCategory === cat
+                  ? `bg-[#0F172A] text-white shadow-[2px_2px_0px_#EFF3F6]`
+                  : 'bg-[#EFF3F6] text-[#0F172A] hover:bg-white hover:-translate-y-0.5'}`}
             >
-              {filter.icon && <filter.icon className="w-4 h-4 mr-2" />}
-              {filter.label}
-            </Button>
+              {cat}
+            </button>
           ))}
         </div>
 
-        {/* Projects Grid */}
-        <motion.div layout className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <AnimatePresence mode="popLayout">
+      </section>
+
+      {/* ==========================================
+          GRELHA DE CARTÕES DE PROJETO (GRID)
+          ========================================== */}
+      <main className="max-w-7xl mx-auto">
+        {filteredProjects.length === 0 ? (
+          <div className="bg-white border-2 border-[#0F172A] rounded-2xl p-12 text-center shadow-[4px_4px_0px_#0F172A]">
+            <Layers className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-xl font-extrabold text-[#0F172A] mb-1">Nenhum projeto encontrado</h3>
+            <p className="text-sm font-medium text-slate-500 mb-6">Experimenta limpar os filtros ou realizar outra pesquisa.</p>
+            <button
+              onClick={() => { setSearch(""); setSelectedCategory("Todos"); }}
+              className="px-4 py-2 bg-[#EFF3F6] text-[#0F172A] border-2 border-[#0F172A] font-bold rounded-lg hover:bg-white transition-all duration-200"
+            >
+              Limpar Filtros
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             {filteredProjects.map((project) => (
-              <motion.div
+              <article 
                 key={project.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-                className="group"
+                className="bg-white border-2 border-[#0F172A] rounded-2xl p-6 shadow-[6px_6px_0px_#0F172A] hover:shadow-[8px_8px_0px_#0F172A] hover:-translate-x-1 hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between relative group"
               >
-                <div className="bg-white rounded-2xl overflow-hidden border border-zinc-100 hover:border-zinc-200 shadow-sm hover:shadow-xl transition-all duration-500">
-                  {/* Image */}
-                  <div className="relative overflow-hidden aspect-[16/10]">
-                    <img
-                      src={project.image}
-                      alt={project.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                {/* Badge de Destaque / Estrela Topo Direito */}
+                {project.progress === 100 && (
+                  <div className="absolute top-4 right-4 bg-emerald-100 border border-emerald-500 text-emerald-800 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md">
+                    CONCLUÍDO ✅
+                  </div>
+                )}
+                {project.progress < 100 && (
+                  <div className="absolute top-4 right-4 bg-orange-100 border border-orange-400 text-orange-800 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md">
+                    DESENVOLVIMENTO ⚡
+                  </div>
+                )}
+
+                <div>
+                  {/* Categoria do Projeto */}
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span 
+                      style={{ backgroundColor: activeTheme.hex }}
+                      className="w-2.5 h-2.5 rounded-full border border-[#0F172A]"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    
-                    {/* Overlay Links */}
-                    <div className="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                      <a
-                        href={project.link}
-                        target='_blank'
-                        className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-sm font-medium text-zinc-900 hover:bg-zinc-100 transition-colors"
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      {project.category}
+                    </span>
+                  </div>
+
+                  {/* Título do Projeto */}
+                  <h2 className="text-2xl font-black mb-2 text-[#0F172A] group-hover:text-black">
+                    {project.title}
+                  </h2>
+
+                  {/* Descrição */}
+                  <p className="text-sm font-medium text-slate-600 mb-6 line-clamp-8">
+                    {project.shortDescription}
+                  </p>
+
+                  {/* Tecnologias Utilizadas (Badge Neo-Brutalista) */}
+                  <div className="flex flex-wrap gap-1.5 mb-6">
+                    {project.tech.map((technology, index) => (
+                      <span 
+                        key={index}
+                        className="px-2.5 py-1 text-xs font-bold bg-[#EFF3F6] text-[#0F172A] border-2 border-[#0F172A] rounded-md shadow-[2px_2px_0px_#0F172A]"
                       >
-                        <ExternalLink className="w-4 h-4" />
-                        Ver Projeto
-                      </a>
+                        #{technology}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Secção Inferior: Progresso e Ações */}
+                <div className="mt-auto border-t-2 border-[#0F172A] pt-4">
+                  {/* Barra de Progresso Customizada (Neo-Brutalista) */}
+                  <div className="mb-4">
+                    <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                      <span>Progresso do Sprint</span>
+                      <span>{project.progress}%</span>
+                    </div>
+                    {/* Canaleta de Progresso */}
+                    <div className="h-4 w-full bg-[#EFF3F6] border-2 border-[#0F172A] rounded-lg overflow-hidden relative">
+                      <div 
+                        style={{ 
+                          width: `${project.progress}%`,
+                          backgroundColor: activeTheme.hex
+                        }} 
+                        className="h-full border-r-2 border-[#0F172A] transition-all duration-500 ease-out"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Botões de Ação Dinâmicos */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      {/* Link GitHub */}
                       {project.github && (
                         <a
-                          href={project.github}
-                          target='_blank'
-                          className="p-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors"
+                          href={`https://${project.github}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 bg-white border-2 border-[#0F172A] rounded-lg shadow-[2px_2px_0px_#0F172A] hover:bg-[#EFF3F6] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all"
+                          title="Ver Código Fonte"
                         >
-                          <Github className="w-4 h-4" />
+                          <Github className="h-4 w-4" />
                         </a>
+                      )}
+
+                      {/* Link Live Preview */}
+                      {project.live && (
+                        <Link
+                          to={project.live}
+                          onClick={()=> setSelectedProject(project)}
+                          rel="noopener noreferrer"
+                          className="px-3 py-2 bg-white border-2 border-[#0F172A] rounded-lg shadow-[2px_2px_0px_#0F172A] hover:bg-[#EFF3F6] hover:-translate-y-0.5 active:translate-y-0 active:shadow-none transition-all flex items-center gap-1 text-xs font-bold"
+                        >
+                          <span>Live</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </Link>
                       )}
                     </div>
                   </div>
-
-                  {/* Content */}
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="secondary" className={`${project.category === 'web' ? 'bg-violet-100 text-violet-700' : 'bg-indigo-100 text-indigo-700'} text-xs`}>
-                        {project.category === 'web' ? 'Web' : 'Automação'}
-                      </Badge>
-                    </div>
-                    <h3 className="text-xl font-bold text-zinc-900 mb-2 group-hover:text-violet-600 transition-colors">
-                      {project.title}
-                    </h3>
-                    <p className="text-zinc-600 text-sm leading-relaxed mb-4">
-                      {project.description}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {project.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-1 text-xs font-medium text-zinc-500 bg-zinc-100 rounded-md"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
                 </div>
-              </motion.div>
+              </article>
             ))}
-          </AnimatePresence>
-        </motion.div>
+          </div>
+        )}
+      </main>
 
-      </div>
-    </section>
+      {/* ==========================================
+          MODAL DE NOVO PROJETO (INLINE PORTAL)
+          ========================================== */}
+      {showModal && (
+        <div className="hidden fixed inset-0 bg-[#0F172A]/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div 
+            className="bg-white border-4 border-[#0F172A] rounded-2xl max-w-xl w-full p-6 shadow-[8px_8px_0px_#0F172A] relative overflow-y-auto max-h-[90vh]"
+            style={{ borderLeftColor: '#0F172A', borderTopColor: '#0F172A' }}
+          >
+            {/* Fechar Modal */}
+            <button 
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 p-1 bg-white border-2 border-[#0F172A] rounded-lg shadow-[2px_2px_0px_#0F172A] hover:bg-[#EFF3F6] active:translate-y-0.5 active:shadow-none"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-6 w-6" style={{ color: activeTheme.hex }} />
+              <h3 className="text-2xl font-black uppercase tracking-tight">Criar Novo Projeto</h3>
+            </div>
+            
+            <form onSubmit={handleSubmitProject} className="space-y-4">
+              
+              {/* Título */}
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                  Nome do Projeto <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newProject.title}
+                  onChange={(e) => setNewProject({...newProject, title: e.target.value})}
+                  placeholder="Ex: Aura Compiler"
+                  className="w-full px-3 py-2 bg-[#EFF3F6] border-2 border-[#0F172A] rounded-lg text-sm font-semibold focus:outline-none focus:border-[#2563EB]"
+                />
+              </div>
+
+              {/* Descrição */}
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                  Descrição Curta <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  required
+                  rows="3"
+                  value={newProject.description}
+                  onChange={(e) => setNewProject({...newProject, description: e.target.value})}
+                  placeholder="Explica resumidamente o foco do projeto..."
+                  className="w-full px-3 py-2 bg-[#EFF3F6] border-2 border-[#0F172A] rounded-lg text-sm font-semibold focus:outline-none focus:border-[#2563EB]"
+                />
+              </div>
+
+              {/* Grid de Inputs Duplos */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Categoria */}
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                    Categoria
+                  </label>
+                  <select
+                    value={newProject.category}
+                    onChange={(e) => setNewProject({...newProject, category: e.target.value})}
+                    className="w-full px-3 py-2 bg-[#EFF3F6] border-2 border-[#0F172A] rounded-lg text-sm font-bold focus:outline-none focus:border-[#2563EB]"
+                  >
+                    <option value="Front-end">Front-end</option>
+                    <option value="Back-end">Back-end</option>
+                    <option value="Fullstack">Fullstack</option>
+                    <option value="Sistemas">Sistemas</option>
+                    <option value="DevOps">DevOps</option>
+                  </select>
+                </div>
+
+                {/* Tecnologias */}
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                    Tecnologias (Separadas por vírgula)
+                  </label>
+                  <input
+                    type="text"
+                    value={newProject.tech}
+                    onChange={(e) => setNewProject({...newProject, tech: e.target.value})}
+                    placeholder="React, Rust, WASM"
+                    className="w-full px-3 py-2 bg-[#EFF3F6] border-2 border-[#0F172A] rounded-lg text-sm font-semibold focus:outline-none focus:border-[#2563EB]"
+                  />
+                </div>
+
+              </div>
+
+              {/* Repositórios e Links */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* GitHub */}
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                    Link GitHub (URL)
+                  </label>
+                  <input
+                    type="text"
+                    value={newProject.github}
+                    onChange={(e) => setNewProject({...newProject, github: e.target.value})}
+                    placeholder="github.com/utilizador/repo"
+                    className="w-full px-3 py-2 bg-[#EFF3F6] border-2 border-[#0F172A] rounded-lg text-sm font-semibold focus:outline-none focus:border-[#2563EB]"
+                  />
+                </div>
+
+                {/* Live Preview */}
+                <div>
+                  <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                    Link Live (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newProject.live}
+                    onChange={(e) => setNewProject({...newProject, live: e.target.value})}
+                    placeholder="projeto.io"
+                    className="w-full px-3 py-2 bg-[#EFF3F6] border-2 border-[#0F172A] rounded-lg text-sm font-semibold focus:outline-none focus:border-[#2563EB]"
+                  />
+                </div>
+
+              </div>
+
+              {/* Slider de Progresso Brutalista */}
+              <div>
+                <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-slate-500 mb-1">
+                  <span>Progresso Atual</span>
+                  <span className="font-extrabold text-[#0F172A]">{newProject.progress}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={newProject.progress}
+                  onChange={(e) => setNewProject({...newProject, progress: e.target.value})}
+                  className="w-full accent-[#0F172A] cursor-ew-resize bg-[#EFF3F6] h-3 rounded-lg border-2 border-[#0F172A]"
+                />
+              </div>
+
+              {/* Botões de Ação do Formulário */}
+              <div className="flex justify-end gap-3 pt-4 border-t-2 border-[#0F172A]">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 bg-white text-[#0F172A] border-2 border-[#0F172A] font-extrabold rounded-lg hover:bg-[#EFF3F6] transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  style={{ 
+                    backgroundColor: activeTheme.hex,
+                    boxShadow: '4px 4px 0px #0F172A'
+                  }}
+                  className="px-5 py-2 text-white border-2 border-[#0F172A] font-black rounded-lg hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none transition-all"
+                >
+                  PUBLICAR PROJETO
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
+
+    </div>
   );
 }

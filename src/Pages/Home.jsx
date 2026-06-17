@@ -6,15 +6,11 @@ import ProjectsSection from '../components/portifolio/ProjectsSection';
 import ContactSection from '../components/portifolio/ContactSection';
 import Footer from '../components/portifolio/Footer';
 
-export default function Home() {
+export default function Home({projetos, setSelectedProject}) {
   return (
     <div className="min-h-screen bg-white">
-      <Navbar/>
-      <HeroSection/>
-      <AboutSection/>
-      <ProjectsSection />
-      <ContactSection />
-      <Footer />
+      <HeroSection projetos={projetos}/>
+      <ProjectsSection projetos={projetos} setSelectedProject={setSelectedProject}/>
     </div>
   );
 }
